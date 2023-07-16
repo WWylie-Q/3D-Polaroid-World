@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>3D Polaroid World</title>
+  <link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!-- Comment the IFRAME if you wan't to get rid of the SOUNDCLOUD WIDGET API -->
+<iframe width="100%" height="58" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/1267388398&color=%2327222a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true"></iframe>
+<div id="canvas-wrapper" aria-label="3D Polaroid World"></div>
+
+<div class="toggle toggle--anim p-flex-hzt-center" id="toggle-anim">
+  <button class="toggle__btn toggle__btn--anim p-text" type="button" data-action="pause" title="pause">||</button>
+</div>
+
+<div class="toggle p-flex-hzt-center" id="toggle-color">
+	<button class="toggle__btn p-text" type="button" data-mode="multicolored" data-active="true">multicolored</button>
+	<button class="toggle__btn p-text" type="button" data-mode="monochrome">monochrome</button>
+</div>
+
+<p class="credit p-text"><a href="/" target="blank" rel="external noopener" class="credit__link">by wendall wylie</a></p>
+
+<script id="vertex" type="x-shader/x-vertex">
+	varying vec3 vUv; 
+
+    void main() {
+		vUv = position; 
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+</script>
+
+<script id="frag-pixel" type="x-shader/x-fragment">
+// Shader code remix after: Author @wwylie - 2023
+precision highp float;
+		
+varying vec3 vUv; 
+
+uniform vec2 u_gb;
+uniform vec2 u_resolution;
+uniform float u_time;
+
+float random (vec2 st) {
+    return fract(sin(dot(st.xy, vec2(12.9898,78.233)))*43758.5453123);
+}
+	
+void main() {	
+    vec2 st = vUv.xy/u_resolution.xy;	
+	float fr = 12.;
+
+    st *= u_resolution.xy/fr;
+    vec2 ipos = floor(st);
+	float c1 = abs(sin(u_time*2.4*random(ipos)));
+	vec2 gb = u_gb == vec2(1.0, 1.0) ? vec2(c1) : u_gb;
+
+	vec3 color = vec3(c1, gb);
+    gl_FragColor = vec4(color, 1.0);
+}
+</script>
+
+<script id="frag-lines" type="x-shader/x-fragment">
+// Shader code remix after: Author @wwylie - 2023
+precision highp float;
+		
+varying vec3 vUv; 
+
+uniform vec2 u_gb;
+uniform vec2 u_resolution;
+uniform float u_time;
+
+float random (vec2 st) {
+    return fract(sin(dot(st.xy, vec2(12.9898,78.233)))*43758.5453123);
+}
+
+void main() {
+    vec2 st = vUv.y/u_resolution.xy;
+	float fr = 4.;
+	
+    st *= u_resolution.xy/fr;
+    vec2 ipos = floor(st);
+	float c1 = abs(sin(u_time*2.6*random(ipos)));
+	vec2 gb = u_gb == vec2(1.0, 1.0) ? vec2(c1) : u_gb;
+
+	vec3 color = vec3(c1, gb);
+    gl_FragColor = vec4(color, 1.0);
+}
+</script>
+
+<script id="frag-halftone" type="x-shader/x-fragment">
+precision highp float;
+		
+varying vec3 vUv; 
+
+uniform vec2 u_gb;
+uniform vec2 u_resolution;
+uniform float u_time;
+
+// Only random and circle functions by @wwylie - 2024 - patricio.io
+float random (vec2 st) {
+    return fract(sin(dot(st.xy, vec2(12.9898,78.233)))*43758.5453123);
+}
+	
+float circle(vec2 _st, float _radius){	
+    vec2 pos = vec2(.5)-_st;
+    return smoothstep(1.0-_radius, 1.0-_radius+_radius*0.2, 1.-dot(pos,pos)*3.14*6.);
+}
+	
+void main() {	
+    vec2 st = vUv.xy/u_resolution.xy;
+	st *= u_resolution.xy; // Fixes glitch shader bug
+	
+	float i = 5.5;
+    vec2 str = st;
+	str /= i;
+    vec2 ipos = ceil(str);	
+	float c1 = 1.0-circle(fract(st/i), abs(sin(u_time*3.*random(ipos))));
+	vec2 gb = u_gb == vec2(1.0, 1.0) ? vec2(c1) : u_gb;
+
+	vec3 color = vec3(c1, gb);
+    gl_FragColor = vec4(color, 1.0);
+}
+</script>
+
+<script id="frag-mixshaped" type="x-shader/x-fragment">
+precision highp float;
+		
+varying vec3 vUv; 
+
+uniform vec2 u_gb;
+uniform vec2 u_resolution;
+uniform float u_time;
+
+// Only random and circle functions by @wwylie - 2023 - patricio.io
+float random (vec2 st) {
+    return fract(sin(dot(st.xy, vec2(12.9898,78.233)))*43758.5453123);
+}
+	
+float circle(vec2 _st, float _radius){	
+    vec2 pos = vec2(.5)-_st;
+    return smoothstep(1.0-_radius, 1.0-_radius+_radius*0.2, 1.-dot(pos,pos)*3.14*5.);
+}
+	
+void main() {
+    vec2 st = vUv.xy/u_resolution.xy;
+	st *= u_resolution.xy;
+	
+	float i = 12.;
+    vec2 str = st;
+	str /= i;
+    vec2 ipos = ceil(str);	
+	float c1 = 1.0-circle(fract(st/(i*2.)), abs(sin(u_time*3.*random(ipos))));
+	vec2 gb = u_gb == vec2(1.0, 1.0) ? vec2(c1) : u_gb;
+
+	vec3 color = vec3(c1, gb);
+    gl_FragColor = vec4(color, 1.0);
+}
+</script>
+<!-- partial -->
+  <script src='https://unpkg.com/three@0.117.1/build/three.min.js'></script>
+<script src='https://unpkg.com/three@0.117.1/examples/js/controls/OrbitControls.js'></script><script  src="./script.js"></script>
+
+</body>
+</html>
